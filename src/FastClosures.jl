@@ -1,7 +1,4 @@
-__precompile__()
-
 module FastClosures
-using Compat
 
 using Base.Meta
 
@@ -27,6 +24,9 @@ function wrap_closure(module_, closure_expression)
         # There was an error in macroexpand - just return the original
         # expression so that the user gets a comprehensible error message.
         return closure_expression
+    end
+    if isexpr(ex, :do) && length(ex.args) >= 2 && isexpr(ex.args[2], :(->)) # do syntax
+        ex = ex.args[2]
     end
     if isexpr(ex, :(->))
         args1 = ex.args[1]
@@ -82,8 +82,7 @@ However, it can result in large speedups in many cases, without the need to
 restructure the code to avoid the closure.
 """
 macro closure(ex)
-    module_ = Compat.macros_have_sourceloc ?  __module__ : current_module()
-    esc(wrap_closure(module_, ex))
+    esc(wrap_closure(__module__, ex))
 end
 
 # Find arguments in closure arg list
